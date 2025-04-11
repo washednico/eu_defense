@@ -88,4 +88,4 @@ options = optimset('Display', 'off');
 
 Er_MV = Mean * weights_MV;
 Vol_MV = sqrt(weights_MV' * VARCOV * weights_MV);
-SR_MV = -sr_MV * sqrt(12);
+SR_MV = -sr_MV * sqrt(12);   %annualize the SR
