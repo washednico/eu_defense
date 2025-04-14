@@ -75,7 +75,7 @@ objective = @(weights_MV) -(Mean*weights_MV - Rf(end)) / sqrt(weights_MV' * VARC
 %Set constraints
 A = []; b = [];  % No inequality constraints in this case\
 Aeq = ones(1,No_Assets); beq = 1;  % weights sum to 1
-lb = zeros(No_Assets,1); ub = 0.3 * ones(No_Assets,1);  % 0 ≤ weights ≤ 0.3
+lb = zeros(No_Assets,1); ub = 0.10 * ones(No_Assets,1);  % 0 ≤ weights ≤ 0.1
 
 % Optimization
 options = optimset('Display', 'off');
@@ -117,23 +117,24 @@ for i = 1 : size(Returns, 1)
     weights_MV = ones(No_Assets,1)/No_Assets;
 
     Returns_Help_adj = Returns_Help;
-    Returns_Help_adj(isnan(Returns_Help_adj)) = 0; 
+    Mean_rolling = mean(Returns_Help_adj,1,'omitnan');
+    Mean_rolling(isnan(Mean_rolling)) = 0;
     objective = @(weights_MV) -(Mean*weights_MV - Rf(i)) / sqrt(weights_MV' * VARCOV * weights_MV);  % Negative Sharpe Ratio to minimize
-    %objective = @(weights_MV) -(mean(Returns_Help_adj,1)*weights_MV - Rf(i)) / sqrt(weights_MV' * VARCOV * weights_MV);  % Negative Sharpe Ratio to minimize
+    %objective = @(weights_MV) -(Mean_rolling*weights_MV - Rf(i)) / sqrt(weights_MV' * VARCOV * weights_MV);  % Negative Sharpe Ratio to minimize
 
 
     %Set constraints
     A = []; b = [];  % No inequality constraints in this case\
     Aeq = ones(1,No_Assets); beq = 1;  % weights sum to 1
-    lb = zeros(No_Assets,1); ub = 0.3 * ones(No_Assets,1);  % 0 ≤ weights ≤ 0.3
+    lb = zeros(No_Assets,1); ub = 0.10 * ones(No_Assets,1);  % 0 ≤ weights ≤ 0.1
 
     % Optimization
     options = optimset('Display', 'off');
     [w_MV, sr_MV] = fmincon(objective, weights_MV, A, b, Aeq, beq, lb, ub, [], options);
     w_MV(w_MV < 0.001) = 0;        %set to 0 very small values
     w_MV = w_MV/sum(w_MV);        %Rebalance weights
-    weights_backtest_MV(i,:) = w_MV;
-    sum_w(i) = sum(weights_backtest_MV(i,:));
+    weights_backtest_MV(i,:) = w_MV;                 %historical weights stored in a matrix
+    sum_w(i) = sum(weights_backtest_MV(i,:));        %check if weights sum to 1 for each period
 
     if i==1
         TC = sum(abs(w_MV))*0.0005;
